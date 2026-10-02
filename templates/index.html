@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Attendance Management System</title>
+    <title>Student Attendance Management System - GPS Geofenced</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -252,17 +252,11 @@
             transition: background 0.2s;
         }
 
-        .btn:hover {
-            background: var(--primary-dark);
-        }
-
-        .btn-secondary {
-            background: var(--border);
-            color: var(--text-main);
-        }
-        .btn-secondary:hover {
-            background: #cbd5e1;
-        }
+        .btn:hover { background: var(--primary-dark); }
+        .btn-secondary { background: var(--border); color: var(--text-main); }
+        .btn-secondary:hover { background: #cbd5e1; }
+        .btn-gps { background: #0ea5e9; }
+        .btn-gps:hover { background: #0284c7; }
 
         /* Form Controls */
         .form-row {
@@ -293,8 +287,19 @@
             font-size: 0.95rem;
         }
 
-        .form-control:focus {
-            border-color: var(--primary);
+        .form-control:focus { border-color: var(--primary); }
+
+        /* Geofence Alert Box */
+        .geofence-banner {
+            background: #e0f2fe;
+            border: 1px solid #bae6fd;
+            color: #0369a1;
+            padding: 14px 18px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
 
         /* Tables */
@@ -310,15 +315,8 @@
             font-size: 0.95rem;
         }
 
-        th {
-            background: #f8fafc;
-            font-weight: 600;
-            color: var(--text-muted);
-        }
-
-        tbody tr:hover {
-            background: #f8fafc;
-        }
+        th { background: #f8fafc; font-weight: 600; color: var(--text-muted); }
+        tbody tr:hover { background: #f8fafc; }
 
         .badge {
             padding: 6px 12px;
@@ -332,11 +330,6 @@
         .badge.absent { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
         .badge.late { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
 
-        .action-btns {
-            display: flex;
-            gap: 8px;
-        }
-
         .btn-icon {
             background: none;
             border: none;
@@ -349,22 +342,11 @@
         }
         .btn-icon.delete:hover { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
 
-        /* Responsive */
         @media(max-width: 900px) {
-            .charts-grid {
-                grid-template-columns: 1fr;
-            }
-            body {
-                flex-direction: column;
-                overflow: auto;
-            }
-            aside {
-                width: 100%;
-                padding: 16px;
-            }
-            main {
-                height: auto;
-            }
+            .charts-grid { grid-template-columns: 1fr; }
+            body { flex-direction: column; overflow: auto; }
+            aside { width: 100%; padding: 16px; }
+            main { height: auto; }
         }
     </style>
 </head>
@@ -380,12 +362,12 @@
             <ul class="nav-links">
                 <li class="active"><a href="#" onclick="switchTab('dashboard')"><i class="fa-solid fa-chart-pie"></i> Dashboard</a></li>
                 <li><a href="#" onclick="switchTab('students')"><i class="fa-solid fa-users"></i> Manage Students</a></li>
-                <li><a href="#" onclick="switchTab('attendance')"><i class="fa-solid fa-clipboard-user"></i> Mark Attendance</a></li>
+                <li><a href="#" onclick="switchTab('attendance')"><i class="fa-solid fa-map-location-dot"></i> GPS Geofence Check-In</a></li>
                 <li><a href="#" onclick="switchTab('reports')"><i class="fa-solid fa-file-lines"></i> Reports & Logs</a></li>
             </ul>
         </div>
         <div class="sidebar-footer">
-            <p>College Mega Project v2.0</p>
+            <p>College Mega Project v2.5</p>
         </div>
     </aside>
 
@@ -445,7 +427,7 @@
                     <div class="chart-card">
                         <h3>Quick Actions</h3>
                         <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 10px;">
-                            <button class="btn" onclick="switchTab('attendance')"><i class="fa-solid fa-plus"></i> Take Today's Attendance</button>
+                            <button class="btn btn-gps" onclick="switchTab('attendance')"><i class="fa-solid fa-location-crosshairs"></i> Run GPS Check-In</button>
                             <button class="btn btn-secondary" onclick="switchTab('students')"><i class="fa-solid fa-user-plus"></i> Add New Student</button>
                             <button class="btn btn-secondary" onclick="exportCSVReport()"><i class="fa-solid fa-download"></i> Export CSV Report</button>
                         </div>
@@ -492,19 +474,24 @@
                                     <th>Actions</th>
                                 </tr>
                             </thead>
-                            <tbody id="studentsTableBody">
-                                <!-- Populated dynamically -->
-                            </tbody>
+                            <tbody id="studentsTableBody"></tbody>
                         </table>
                     </div>
                 </div>
             </section>
 
-            <!-- 3. ATTENDANCE TAB -->
+            <!-- 3. ATTENDANCE & GEOFENCE TAB -->
             <section id="attendance" class="view-section">
+                <div class="geofence-banner">
+                    <div>
+                        <i class="fa-solid fa-shield-halved"></i> <strong>Geofencing Security Active:</strong> Students must be within <span id="radiusDisplay">500</span> meters of campus bounds to register attendance.
+                    </div>
+                    <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="updateCampusCoords()">Configure Coordinates</button>
+                </div>
+
                 <div class="card">
                     <div class="card-header">
-                        <h3>Mark Daily Attendance</h3>
+                        <h3>GPS Location Verified Attendance</h3>
                         <div style="display: flex; gap: 12px; align-items: center;">
                             <label style="font-size: 0.9rem; font-weight: 600;">Date:</label>
                             <input type="date" id="attendanceDate" class="form-control" onchange="renderAttendanceSheet()">
@@ -520,13 +507,12 @@
                                     <th>Status Selection</th>
                                 </tr>
                             </thead>
-                            <tbody id="attendanceSheetBody">
-                                <!-- Populated dynamically -->
-                            </tbody>
+                            <tbody id="attendanceSheetBody"></tbody>
                         </table>
                     </div>
-                    <div style="margin-top: 20px; text-align: right;">
-                        <button class="btn" onclick="saveAttendance()"><i class="fa-solid fa-floppy-disk"></i> Save Attendance Records</button>
+                    <div style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                        <span id="gpsStatusText" style="font-size: 0.9rem; color: var(--text-muted);"><i class="fa-solid fa-circle-info"></i> Click verify to scan location before saving.</span>
+                        <button class="btn btn-gps" onclick="verifyAndSaveAttendance()"><i class="fa-solid fa-location-crosshairs"></i> Verify GPS & Save Attendance</button>
                     </div>
                 </div>
             </section>
@@ -552,9 +538,7 @@
                                     <th>Percentage</th>
                                 </tr>
                             </thead>
-                            <tbody id="reportsTableBody">
-                                <!-- Populated dynamically -->
-                            </tbody>
+                            <tbody id="reportsTableBody"></tbody>
                         </table>
                     </div>
                 </div>
@@ -564,7 +548,6 @@
     </main>
 
     <script>
-        // Data State & Initialization
         let students = JSON.parse(localStorage.getItem('attend_students')) || [
             { id: 'CS101', name: 'Alice Smith', class: 'B.Tech CSE' },
             { id: 'CS102', name: 'Bob Jones', class: 'B.Tech CSE' },
@@ -573,24 +556,29 @@
 
         let attendanceRecords = JSON.parse(localStorage.getItem('attend_records')) || {}; 
 
+        let campusLocation = JSON.parse(localStorage.getItem('campus_coords')) || {
+            lat: 21.1458, 
+            lng: 79.0882, 
+            radiusMeters: 500 
+        };
+
         let overviewChartInstance = null;
 
-        // Tab Switcher Routine
         function switchTab(tabId) {
             document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
             document.querySelectorAll('.nav-links li').forEach(li => li.classList.remove('active'));
             
             document.getElementById(tabId).classList.add('active');
-            
             event && event.currentTarget && event.currentTarget.parentElement.classList.add('active');
             
             const titles = {
                 'dashboard': 'Dashboard Overview',
                 'students': 'Student Directory Management',
-                'attendance': 'Daily Attendance Portal',
+                'attendance': 'GPS Geofenced Attendance Portal',
                 'reports': 'Attendance Logs & Analytics'
             };
             document.getElementById('page-title').innerText = titles[tabId];
+            document.getElementById('radiusDisplay').innerText = campusLocation.radiusMeters;
 
             if (tabId === 'dashboard') updateDashboard();
             if (tabId === 'students') renderStudentsTable();
@@ -601,13 +589,41 @@
             if (tabId === 'reports') renderReportsTable();
         }
 
-        // Save to LocalStorage
         function persistData() {
             localStorage.setItem('attend_students', JSON.stringify(students));
             localStorage.setItem('attend_records', JSON.stringify(attendanceRecords));
+            localStorage.setItem('campus_coords', JSON.stringify(campusLocation));
         }
 
-        // 1. Students Logic
+        function updateCampusCoords() {
+            const lat = prompt("Enter Campus/Classroom Latitude:", campusLocation.lat);
+            const lng = prompt("Enter Campus/Classroom Longitude:", campusLocation.lng);
+            const radius = prompt("Enter Allowed Radius in meters:", campusLocation.radiusMeters);
+
+            if (lat && lng && radius) {
+                campusLocation.lat = parseFloat(lat);
+                campusLocation.lng = parseFloat(lng);
+                campusLocation.radiusMeters = parseFloat(radius);
+                persistData();
+                document.getElementById('radiusDisplay').innerText = campusLocation.radiusMeters;
+                alert('Campus coordinates updated successfully!');
+            }
+        }
+
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371e3;
+            const φ1 = lat1 * Math.PI/180;
+            const φ2 = lat2 * Math.PI/180;
+            const Δφ = (lat2-lat1) * Math.PI/180;
+            const Δλ = (lon2-lon1) * Math.PI/180;
+
+            const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                      Math.cos(φ1) * Math.cos(φ2) *
+                      Math.sin(Δλ/2) * Math.sin(Δλ/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
         function handleAddStudent(e) {
             e.preventDefault();
             const id = document.getElementById('studentId').value.trim();
@@ -655,7 +671,6 @@
             });
         }
 
-        // 2. Attendance Marking Logic
         function renderAttendanceSheet() {
             const dateStr = document.getElementById('attendanceDate').value;
             const tbody = document.getElementById('attendanceSheetBody');
@@ -687,28 +702,56 @@
             });
         }
 
-        function saveAttendance() {
+        function verifyAndSaveAttendance() {
             const dateStr = document.getElementById('attendanceDate').value;
+            const statusMsg = document.getElementById('gpsStatusText');
+
             if (!dateStr) {
                 alert('Please pick a valid date.');
                 return;
             }
 
-            const selects = document.querySelectorAll('.status-select');
-            if (!attendanceRecords[dateStr]) {
-                attendanceRecords[dateStr] = {};
+            if (!navigator.geolocation) {
+                alert('Geolocation is not supported by your browser.');
+                return;
             }
 
-            selects.forEach(sel => {
-                const sId = sel.getAttribute('data-id');
-                attendanceRecords[dateStr][sId] = sel.value;
-            });
+            statusMsg.innerHTML = `<i class="fa-solid fa-spinner fa-spin" style="color:var(--primary);"></i> Acquiring GPS coordinates...`;
 
-            persistData();
-            alert('Attendance records saved successfully for ' + dateStr);
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const userLat = position.coords.latitude;
+                    const userLng = position.coords.longitude;
+                    const distance = calculateDistance(userLat, userLng, campusLocation.lat, campusLocation.lng);
+
+                    if (distance <= campusLocation.radiusMeters) {
+                        statusMsg.innerHTML = `<i class="fa-solid fa-circle-check" style="color:var(--success);"></i> GPS Verified! (${Math.round(distance)}m from target).`;
+                        
+                        const selects = document.querySelectorAll('.status-select');
+                        if (!attendanceRecords[dateStr]) {
+                            attendanceRecords[dateStr] = {};
+                        }
+
+                        selects.forEach(sel => {
+                            const sId = sel.getAttribute('data-id');
+                            attendanceRecords[dateStr][sId] = sel.value;
+                        });
+
+                        persistData();
+                        alert('Geofence check passed! Attendance records successfully saved for ' + dateStr);
+                    } else {
+                        statusMsg.innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="color:var(--danger);"></i> Out of bounds! (${Math.round(distance)}m away).`;
+                        alert(`Access Denied: You are outside the campus boundary radius (${Math.round(distance)}m away). Proxy attendance prevented!`);
+                    }
+                },
+                (error) => {
+                    statusMsg.innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="color:var(--danger);"></i> GPS Location error.`;
+                    alert('Error retrieving location: ' + error.message + '. Ensure location permissions are granted.');
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
         }
 
-        // 3. Reports & Analytics Logic
         function calculateStats() {
             let totalPresent = 0, totalAbsent = 0, totalLate = 0, totalMarks = 0;
             const sessionDates = Object.keys(attendanceRecords);
@@ -738,22 +781,12 @@
             });
 
             const avgPercentage = totalMarks > 0 ? Math.round((totalPresent / totalMarks) * 100) : 0;
-
-            return {
-                totalStudents: students.length,
-                avgPercentage,
-                sessionsCount: sessionDates.length,
-                atRiskCount,
-                totalPresent,
-                totalAbsent,
-                totalLate
-            };
+            return { totalStudents: students.length, avgPercentage, sessionsCount: sessionDates.length, atRiskCount, totalPresent, totalAbsent, totalLate };
         }
 
         function renderReportsTable() {
             const tbody = document.getElementById('reportsTableBody');
             tbody.innerHTML = '';
-
             const sessionDates = Object.keys(attendanceRecords);
 
             if (students.length === 0) {
@@ -774,7 +807,6 @@
                 });
 
                 const pct = total > 0 ? ((p + l) / total * 100).toFixed(1) : '0.0';
-
                 tbody.innerHTML += `
                     <tr>
                         <td><strong>${s.id}</strong></td>
@@ -790,7 +822,6 @@
             });
         }
 
-        // 4. Dashboard & Chart Update
         function updateDashboard() {
             const stats = calculateStats();
             document.getElementById('stat-total-students').innerText = stats.totalStudents;
@@ -799,9 +830,7 @@
             document.getElementById('stat-low-attendance').innerText = stats.atRiskCount;
 
             const ctx = document.getElementById('overviewChart').getContext('2d');
-            if (overviewChartInstance) {
-                overviewChartInstance.destroy();
-            }
+            if (overviewChartInstance) overviewChartInstance.destroy();
 
             overviewChartInstance = new Chart(ctx, {
                 type: 'doughnut',
@@ -813,14 +842,7 @@
                         borderWidth: 0
                     }]
                 },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            position: 'bottom'
-                        }
-                    }
-                }
+                options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
             });
         }
 
@@ -846,15 +868,13 @@
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "attendance_report.csv");
+            link.setAttribute("download", "geofenced_attendance_report.csv");
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
         }
 
-        window.onload = function() {
-            updateDashboard();
-        };
+        window.onload = function() { updateDashboard(); };
     </script>
 </body>
-</html>
+</html>ss
