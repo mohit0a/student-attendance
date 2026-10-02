@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AttendEase Pro - Role-Based Attendance System</title>
+    <title>AttendEase Pro - Role-Based GPS Attendance</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -21,341 +21,76 @@
             --warning: #f59e0b;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            height: 100vh;
-            overflow: hidden;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); height: 100vh; overflow: hidden; display: flex; }
 
         /* Login Screen Overlay */
         #login-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
+            display: flex; align-items: center; justify-content: center; z-index: 1000;
         }
-
         .login-card {
-            background: white;
-            padding: 40px;
-            border-radius: 16px;
-            width: 100%;
-            max-width: 420px;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            background: white; padding: 40px; border-radius: 16px; width: 100%; max-width: 420px;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); text-align: center;
         }
-
-        .login-card h2 {
-            margin-bottom: 8px;
-            font-size: 1.5rem;
-            color: var(--text-main);
+        .login-card h2 { margin-bottom: 8px; color: var(--text-main); font-size: 1.6rem; }
+        .login-card p { color: var(--text-muted); margin-bottom: 24px; font-size: 0.9rem; }
+        .role-selector { display: flex; gap: 12px; margin-bottom: 20px; }
+        .role-btn {
+            flex: 1; padding: 12px; border: 2px solid var(--border); background: white;
+            border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s;
         }
+        .role-btn.active { border-color: var(--primary); background: rgba(79, 70, 229, 0.05); color: var(--primary); }
 
-        .login-card p {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            margin-bottom: 24px;
-        }
-
-        .login-tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            background: var(--bg-color);
-            padding: 4px;
-            border-radius: 8px;
-        }
-
-        .tab-btn {
-            flex: 1;
-            padding: 10px;
-            border: none;
-            background: transparent;
-            font-weight: 600;
-            cursor: pointer;
-            border-radius: 6px;
-            color: var(--text-muted);
-            transition: all 0.2s;
-        }
-
-        .tab-btn.active {
-            background: white;
-            color: var(--primary);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-
-        .login-form-group {
-            display: none;
-        }
-
-        .login-form-group.active {
-            display: block;
-        }
-
-        /* Main App Layout (Hidden until login) */
-        #app-container {
-            display: none;
-            height: 100vh;
-            width: 100vw;
-            display: flex;
-        }
-
-        aside {
-            width: 260px;
-            background: var(--card-bg);
-            border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            padding: 24px;
-        }
-
-        .logo-area {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 36px;
-        }
-
+        /* Main App Layout */
+        .app-container { display: flex; width: 100%; height: 100%; display: none; }
+        aside { width: 260px; background: var(--card-bg); border-right: 1px solid var(--border); display: flex; flex-direction: column; justify-content: space-between; padding: 24px; }
+        .logo-area { display: flex; align-items: center; gap: 12px; margin-bottom: 36px; }
         .logo-area i { font-size: 28px; color: var(--primary); }
         .logo-area h2 { font-size: 1.15rem; font-weight: 700; }
+        .nav-links { list-style: none; display: flex; flex-direction: column; gap: 8px; flex-grow: 1; }
+        .nav-links li a { display: flex; align-items: center; gap: 14px; padding: 12px 16px; text-decoration: none; color: var(--text-muted); font-weight: 500; border-radius: 8px; transition: all 0.2s; }
+        .nav-links li a:hover, .nav-links li.active a { background: var(--primary); color: white; }
 
-        .nav-links {
-            list-style: none;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            flex-grow: 1;
-        }
-
-        .nav-links li a {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            padding: 12px 16px;
-            text-decoration: none;
-            color: var(--text-muted);
-            font-weight: 500;
-            border-radius: 8px;
-            transition: all 0.2s ease;
-        }
-
-        .nav-links li a:hover, .nav-links li.active a {
-            background: var(--primary);
-            color: white;
-        }
-
-        .sidebar-footer {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            text-align: center;
-            border-top: 1px solid var(--border);
-            padding-top: 16px;
-        }
-
-        main {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-        }
-
-        header {
-            background: var(--card-bg);
-            padding: 20px 36px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        header h1 { font-size: 1.5rem; font-weight: 600; }
-
-        .user-profile {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .user-profile img {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: var(--border);
-        }
-
-        .content-body {
-            padding: 36px;
-            max-width: 1400px;
-            width: 100%;
-            margin: 0 auto;
-        }
-
+        main { flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; }
+        header { background: var(--card-bg); padding: 20px 36px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .content-body { padding: 36px; max-width: 1400px; width: 100%; margin: 0 auto; }
         .view-section { display: none; }
         .view-section.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(6px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 24px;
-            margin-bottom: 32px;
-        }
-
-        .stat-card {
-            background: var(--card-bg);
-            padding: 24px;
-            border-radius: 12px;
-            border: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .stat-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-        }
-
+        /* Dashboard & Cards */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; margin-bottom: 32px; }
+        .stat-card { background: var(--card-bg); padding: 24px; border-radius: 12px; border: 1px solid var(--border); display: flex; align-items: center; gap: 20px; }
+        .stat-icon { width: 60px; height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; }
         .stat-icon.blue { background: rgba(79, 70, 229, 0.1); color: var(--primary); }
         .stat-icon.green { background: rgba(16, 185, 129, 0.1); color: var(--success); }
         .stat-icon.red { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
-        .stat-icon.yellow { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
-
-        .stat-info h3 { font-size: 1.8rem; font-weight: 700; margin-bottom: 4px; }
-        .stat-info p { color: var(--text-muted); font-size: 0.9rem; }
-
-        .charts-grid {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 24px;
-        }
-
-        .chart-card {
-            background: var(--card-bg);
-            padding: 24px;
-            border-radius: 12px;
-            border: 1px solid var(--border);
-        }
-
-        .card {
-            background: var(--card-bg);
-            border-radius: 12px;
-            border: 1px solid var(--border);
-            padding: 24px;
-            margin-bottom: 24px;
-        }
-
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .btn {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 10px 18px;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: background 0.2s;
-        }
-
+        
+        .card { background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border); padding: 24px; margin-bottom: 24px; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        
+        .btn { background: var(--primary); color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: background 0.2s; }
         .btn:hover { background: var(--primary-dark); }
         .btn-secondary { background: var(--border); color: var(--text-main); }
         .btn-secondary:hover { background: #cbd5e1; }
-        .btn-gps { background: #0ea5e9; }
+        .btn-gps { background: #0ea5e9; color: white; }
         .btn-gps:hover { background: #0284c7; }
-        .btn-danger { background: var(--danger); }
-        .btn-danger:hover { background: #dc2626; }
 
-        .form-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) 150px;
-            gap: 16px;
-            align-items: flex-end;
-            margin-bottom: 20px;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
+        .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) 150px; gap: 16px; align-items: flex-end; margin-bottom: 20px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
         .form-group label { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); }
-
-        .form-control {
-            padding: 10px 14px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            outline: none;
-            font-size: 0.95rem;
-            width: 100%;
-        }
-
+        .form-control { padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border); outline: none; font-size: 0.95rem; }
         .form-control:focus { border-color: var(--primary); }
 
-        .geofence-banner {
-            background: #e0f2fe;
-            border: 1px solid #bae6fd;
-            color: #0369a1;
-            padding: 14px 18px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
+        .banner { background: #e0f2fe; border: 1px solid #bae6fd; color: #0369a1; padding: 14px 18px; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; }
         table { width: 100%; border-collapse: collapse; text-align: left; }
         th, td { padding: 14px 16px; border-bottom: 1px solid var(--border); font-size: 0.95rem; }
         th { background: #f8fafc; font-weight: 600; color: var(--text-muted); }
-        tbody tr:hover { background: #f8fafc; }
-
-        .badge {
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            display: inline-block;
-        }
+        .badge { padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; display: inline-block; }
         .badge.present { background: rgba(16, 185, 129, 0.1); color: var(--success); }
         .badge.absent { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
-        .badge.late { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
-
-        .btn-icon {
-            background: none; border: none; cursor: pointer; font-size: 1rem; color: var(--text-muted); padding: 6px; border-radius: 4px;
-        }
-        .btn-icon.delete:hover { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
     </style>
 </head>
 <body>
@@ -363,71 +98,59 @@
     <!-- LOGIN SCREEN -->
     <div id="login-screen">
         <div class="login-card">
-            <h2>AttendEase Portal</h2>
-            <p>Select your login role to proceed</p>
+            <h2><i class="fa-solid fa-graduation-cap" style="color: var(--primary);"></i> AttendEase Pro</h2>
+            <p>Select your portal to continue</p>
             
-            <div class="login-tabs">
-                <button class="tab-btn active" onclick="switchLoginTab('teacher')">Teacher Portal</button>
-                <button class="tab-btn" onclick="switchLoginTab('student')">Student Portal</button>
+            <div class="role-selector">
+                <button class="role-btn active" id="btn-role-teacher" onclick="setRole('teacher')">Teacher</button>
+                <button class="role-btn" id="btn-role-student" onclick="setRole('student')">Student</button>
             </div>
 
-            <!-- Teacher Login Form -->
-            <div id="teacher-login-form" class="login-form-group active">
-                <div class="form-group" style="margin-bottom: 16px;">
-                    <label>Admin Password</label>
-                    <input type="password" id="teacherPassword" class="form-control" placeholder="Enter password (default: admin123)">
-                </div>
-                <button class="btn" style="width: 100%; justify-content: center;" onclick="loginAsTeacher()">Login as Teacher</button>
+            <div id="teacher-login-area">
+                <button class="btn" style="width: 100%; justify-content: center;" onclick="loginAsTeacher()">Enter Teacher Portal</button>
             </div>
 
-            <!-- Student Login Form -->
-            <div id="student-login-form" class="login-form-group">
-                <div class="form-group" style="margin-bottom: 16px;">
-                    <label>Unique Student ID / Roll No</label>
-                    <input type="text" id="studentLoginId" class="form-control" placeholder="e.g. CS101">
+            <div id="student-login-area" style="display: none;">
+                <div class="form-group" style="text-align: left; margin-bottom: 16px;">
+                    <label>Enter Your Unique Student ID / Roll No</label>
+                    <input type="text" id="loginStudentId" class="form-control" placeholder="e.g. CS101">
                 </div>
-                <button class="btn btn-gps" style="width: 100%; justify-content: center;" onclick="loginAsStudent()">View My Attendance</button>
+                <button class="btn btn-gps" style="width: 100%; justify-content: center;" onclick="loginAsStudent()">Access Student Portal</button>
             </div>
         </div>
     </div>
 
-    <!-- MAIN APP CONTAINER (Initially Hidden) -->
-    <div id="app-container" style="display: none;">
+    <!-- MAIN APP CONTAINER -->
+    <div class="app-container" id="appContainer">
         <!-- Sidebar Navigation -->
         <aside>
             <div>
                 <div class="logo-area">
                     <i class="fa-solid fa-graduation-cap"></i>
-                    <h2 id="sidebar-brand">AttendEase Pro</h2>
+                    <h2 id="portal-title-header">Teacher Portal</h2>
                 </div>
                 <ul class="nav-links" id="sidebar-nav-links">
-                    <!-- Dynamic links populated via JS based on role -->
+                    <!-- Dynamic links injected based on role -->
                 </ul>
             </div>
-            <div class="sidebar-footer">
-                <button class="btn btn-secondary btn-danger" style="width: 100%; font-size: 0.85rem; padding: 8px; justify-content: center;" onclick="logout()">
-                    <i class="fa-solid fa-right-from-bracket"></i> Logout
-                </button>
+            <div>
+                <button class="btn btn-secondary" style="width: 100%; justify-content: center;" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
             </div>
         </aside>
 
-        <!-- Main Section -->
+        <!-- Main Content Area -->
         <main>
             <header>
                 <h1 id="page-title">Dashboard</h1>
-                <div class="user-profile">
-                    <img id="user-avatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Admin" alt="User">
-                    <div>
-                        <h4 id="user-role-title" style="font-size: 0.95rem;">System Admin</h4>
-                        <p id="user-role-subtitle" style="font-size: 0.75rem; color: var(--text-muted);">Faculty Portal</p>
-                    </div>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <span id="user-badge" class="badge present">Teacher Mode</span>
                 </div>
             </header>
 
             <div class="content-body">
 
                 <!-- 1. TEACHER DASHBOARD -->
-                <section id="dashboard" class="view-section">
+                <section id="teacher-dashboard" class="view-section">
                     <div class="stats-grid">
                         <div class="stat-card">
                             <div class="stat-icon blue"><i class="fa-solid fa-user-graduate"></i></div>
@@ -437,139 +160,62 @@
                             <div class="stat-icon green"><i class="fa-solid fa-user-check"></i></div>
                             <div class="stat-info"><h3 id="stat-overall-present">0%</h3><p>Average Attendance</p></div>
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-icon yellow"><i class="fa-solid fa-calendar-check"></i></div>
-                            <div class="stat-info"><h3 id="stat-classes-recorded">0</h3><p>Sessions Logged</p></div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-icon red"><i class="fa-solid fa-triangle-exclamation"></i></div>
-                            <div class="stat-info"><h3 id="stat-low-attendance">0</h3><p>At-Risk (&lt;75%)</p></div>
-                        </div>
                     </div>
-                    <div class="charts-grid">
-                        <div class="chart-card">
-                            <h3>Overall Status Breakdown</h3>
-                            <canvas id="overviewChart" height="140"></canvas>
+                    <div class="card">
+                        <div class="card-header"><h3>Live Classroom GPS Beacon Control</h3></div>
+                        <div class="banner">
+                            <div><i class="fa-solid fa-broadcast-tower"></i> Teacher Live Location Broadcast: <span id="beaconStatus" style="font-weight: 700; color: var(--danger);">Not Broadcasting</span></div>
+                            <button class="btn btn-gps" onclick="broadcastTeacherLocation()"><i class="fa-solid fa-location-crosshairs"></i> Start Broadcasting Location</button>
                         </div>
-                        <div class="chart-card">
-                            <h3>Quick Actions</h3>
-                            <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 10px;">
-                                <button class="btn btn-gps" onclick="switchTab('attendance')"><i class="fa-solid fa-location-crosshairs"></i> Run GPS Check-In</button>
-                                <button class="btn btn-secondary" onclick="switchTab('students')"><i class="fa-solid fa-user-plus"></i> Add New Student</button>
-                                <button class="btn btn-secondary" onclick="exportCSVReport()"><i class="fa-solid fa-download"></i> Export CSV Report</button>
-                            </div>
-                        </div>
+                        <p style="font-size: 0.85rem; color: var(--text-muted);">When active, student mobile check-ins will validate against your live GPS coordinates within a 50m radius.</p>
                     </div>
                 </section>
 
-                <!-- 2. TEACHER: STUDENTS MANAGEMENT -->
-                <section id="students" class="view-section">
+                <!-- 2. TEACHER MANAGE STUDENTS -->
+                <section id="teacher-students" class="view-section">
                     <div class="card">
                         <div class="card-header"><h3>Add New Student</h3></div>
                         <form id="studentForm" onsubmit="handleAddStudent(event)">
                             <div class="form-row">
-                                <div class="form-group">
-                                    <label>Student ID / Roll No</label>
-                                    <input type="text" id="studentId" class="form-control" placeholder="e.g. CS202601" required>
-                                </div>
-                                <div class="form-group">
-                                    <label>Full Name</label>
-                                    <input type="text" id="studentName" class="form-control" placeholder="e.g. Alex Johnson" required>
-                                </div>
-                                <div class="form-group">
-                                    <label>Class / Department</label>
-                                    <input type="text" id="studentClass" class="form-control" placeholder="e.g. B.Tech CSE" required>
-                                </div>
-                                <button type="submit" class="btn"><i class="fa-solid fa-plus"></i> Add Student</button>
+                                <div class="form-group"><label>Student ID</label><input type="text" id="studentId" class="form-control" placeholder="CS101" required></div>
+                                <div class="form-group"><label>Full Name</label><input type="text" id="studentName" class="form-control" placeholder="John Doe" required></div>
+                                <div class="form-group"><label>Class</label><input type="text" id="studentClass" class="form-control" placeholder="B.Tech CSE" required></div>
+                                <button type="submit" class="btn"><i class="fa-solid fa-plus"></i> Add</button>
                             </div>
                         </form>
                     </div>
                     <div class="card">
                         <div class="card-header"><h3>Registered Students Directory</h3></div>
-                        <div style="overflow-x: auto;">
-                            <table>
-                                <thead>
-                                    <tr><th>ID / Roll No</th><th>Full Name</th><th>Class / Department</th><th>Actions</th></tr>
-                                </thead>
-                                <tbody id="studentsTableBody"></tbody>
-                            </table>
-                        </div>
+                        <table>
+                            <thead><tr><th>ID</th><th>Name</th><th>Class</th><th>Action</th></tr></thead>
+                            <tbody id="studentsTableBody"></tbody>
+                        </table>
                     </div>
                 </section>
 
-                <!-- 3. TEACHER: GPS ATTENDANCE -->
-                <section id="attendance" class="view-section">
-                    <div class="geofence-banner">
-                        <div><i class="fa-solid fa-shield-halved"></i> <strong>Geofencing Security Active:</strong> Students must be within <span id="radiusDisplay">500</span> meters of campus bounds.</div>
-                        <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="updateCampusCoords()">Configure Coordinates</button>
-                    </div>
+                <!-- 3. TEACHER REPORTS -->
+                <section id="teacher-reports" class="view-section">
                     <div class="card">
-                        <div class="card-header">
-                            <h3>GPS Location Verified Attendance</h3>
-                            <div style="display: flex; gap: 12px; align-items: center;">
-                                <label style="font-size: 0.9rem; font-weight: 600;">Date:</label>
-                                <input type="date" id="attendanceDate" class="form-control" onchange="renderAttendanceSheet()">
-                            </div>
-                        </div>
-                        <div style="overflow-x: auto;">
-                            <table>
-                                <thead>
-                                    <tr><th>ID</th><th>Student Name</th><th>Class</th><th>Status Selection</th></tr>
-                                </thead>
-                                <tbody id="attendanceSheetBody"></tbody>
-                            </table>
-                        </div>
-                        <div style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-                            <span id="gpsStatusText" style="font-size: 0.9rem; color: var(--text-muted);"><i class="fa-solid fa-circle-info"></i> Click verify to scan location before saving.</span>
-                            <button class="btn btn-gps" onclick="verifyAndSaveAttendance()"><i class="fa-solid fa-location-crosshairs"></i> Verify GPS & Save Attendance</button>
-                        </div>
+                        <div class="card-header"><h3>Master Attendance Logs</h3><button class="btn btn-secondary" onclick="exportCSV()"><i class="fa-solid fa-download"></i> Export CSV</button></div>
+                        <table>
+                            <thead><tr><th>ID</th><th>Name</th><th>Present</th><th>Absent</th><th>Percentage</th></tr></thead>
+                            <tbody id="reportsTableBody"></tbody>
+                        </table>
                     </div>
                 </section>
 
-                <!-- 4. TEACHER: REPORTS -->
-                <section id="reports" class="view-section">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3>Comprehensive Student Analytics & Summary</h3>
-                            <button class="btn btn-secondary" onclick="exportCSVReport()"><i class="fa-solid fa-file-csv"></i> Download CSV</button>
-                        </div>
-                        <div style="overflow-x: auto;">
-                            <table>
-                                <thead>
-                                    <tr><th>ID</th><th>Name</th><th>Class</th><th>Present</th><th>Absent</th><th>Late</th><th>Total Recorded</th><th>Percentage</th></tr>
-                                </thead>
-                                <tbody id="reportsTableBody"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- 5. STUDENT VIEW PORTAL -->
+                <!-- 4. STUDENT INDIVIDUAL PORTAL -->
                 <section id="student-portal" class="view-section">
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-icon green"><i class="fa-solid fa-user-check"></i></div>
-                            <div class="stat-info"><h3 id="stud-stat-pct">0%</h3><p>Your Attendance Rate</p></div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-icon blue"><i class="fa-solid fa-calendar-check"></i></div>
-                            <div class="stat-info"><h3 id="stud-stat-present">0</h3><p>Classes Present</p></div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-icon red"><i class="fa-solid fa-calendar-xmark"></i></div>
-                            <div class="stat-info"><h3 id="stud-stat-absent">0</h3><p>Classes Absent</p></div>
-                        </div>
+                    <div class="banner">
+                        <div><i class="fa-solid fa-id-badge"></i> Welcome, <span id="studentPortalName" style="font-weight: 700;"></span> (<span id="studentPortalId"></span>)</div>
+                        <button class="btn btn-gps" onclick="studentProximityCheckIn()"><i class="fa-solid fa-location-crosshairs"></i> Proximity Auto Check-In</button>
                     </div>
                     <div class="card">
-                        <div class="card-header"><h3 id="student-welcome-title">My Attendance History</h3></div>
-                        <div style="overflow-x: auto;">
-                            <table>
-                                <thead>
-                                    <tr><th>Date</th><th>Status Recorded</th></tr>
-                                </thead>
-                                <tbody id="studentHistoryTableBody"></tbody>
-                            </table>
-                        </div>
+                        <div class="card-header"><h3>Your Personal Attendance History</h3></div>
+                        <table>
+                            <thead><tr><th>Date</th><th>Status</th></tr></thead>
+                            <tbody id="studentHistoryBody"></tbody>
+                        </table>
                     </div>
                 </section>
 
@@ -578,141 +224,127 @@
     </div>
 
     <script>
+        let currentRole = 'teacher';
+        let activeStudentId = null;
+
         let students = JSON.parse(localStorage.getItem('attend_students')) || [
             { id: 'CS101', name: 'Alice Smith', class: 'B.Tech CSE' },
-            { id: 'CS102', name: 'Bob Jones', class: 'B.Tech CSE' },
-            { id: 'CS103', name: 'Charlie Brown', class: 'B.Tech CSE' }
+            { id: 'CS102', name: 'Bob Jones', class: 'B.Tech CSE' }
         ];
+        let attendanceRecords = JSON.parse(localStorage.getItem('attend_records')) || {};
+        let teacherBeacon = JSON.parse(localStorage.getItem('teacher_beacon')) || null; // {lat, lng, activeTime}
 
-        let attendanceRecords = JSON.parse(localStorage.getItem('attend_records')) || {}; 
-        let campusLocation = JSON.parse(localStorage.getItem('campus_coords')) || { lat: 21.1458, lng: 79.0882, radiusMeters: 500 };
-        let currentUser = null; // { role: 'teacher' | 'student', studentId: '...' }
-        let overviewChartInstance = null;
-
-        function switchLoginTab(role) {
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('.login-form-group').forEach(grp => grp.classList.remove('active'));
-
+        function setRole(role) {
+            currentRole = role;
+            document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`btn-role-${role}`).classList.add('active');
             if (role === 'teacher') {
-                event.currentTarget.classList.add('active');
-                document.getElementById('teacher-login-form').classList.add('active');
+                document.getElementById('teacher-login-area').style.display = 'block';
+                document.getElementById('student-login-area').style.display = 'none';
             } else {
-                event.currentTarget.classList.add('active');
-                document.getElementById('student-login-form').classList.add('active');
+                document.getElementById('teacher-login-area').style.display = 'none';
+                document.getElementById('student-login-area').style.display = 'block';
             }
         }
 
         function loginAsTeacher() {
-            const pass = document.getElementById('teacherPassword').value.trim();
-            if (pass === 'admin123' || pass === '') { // default pass admin123
-                currentUser = { role: 'teacher' };
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('app-container').style.display = 'flex';
-                setupTeacherNavigation();
-                switchTab('dashboard');
-            } else {
-                alert('Incorrect Admin Password! Try "admin123".');
-            }
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('appContainer').style.display = 'flex';
+            document.getElementById('portal-title-header').innerText = 'Teacher Portal';
+            document.getElementById('user-badge').innerText = 'Teacher Admin';
+            
+            document.getElementById('sidebar-nav-links').innerHTML = `
+                <li class="active"><a href="#" onclick="switchTeacherTab('teacher-dashboard', this)"><i class="fa-solid fa-chart-pie"></i> Dashboard & Beacon</a></li>
+                <li><a href="#" onclick="switchTeacherTab('teacher-students', this)"><i class="fa-solid fa-users"></i> Manage Students</a></li>
+                <li><a href="#" onclick="switchTeacherTab('teacher-reports', this)"><i class="fa-solid fa-file-lines"></i> Master Reports</a></li>
+            `;
+            switchTeacherTab('teacher-dashboard', document.querySelector('.nav-links li'));
         }
 
         function loginAsStudent() {
-            const studId = document.getElementById('studentLoginId').value.trim();
-            const studentExists = students.find(s => s.id === studId);
-
-            if (!studentExists) {
-                alert('Student ID not found in registry. Please check with your teacher.');
+            const idInput = document.getElementById('loginStudentId').value.trim();
+            const found = students.find(s => s.id === idInput);
+            if (!found) {
+                alert('Invalid Student ID! Please check with your teacher.');
                 return;
             }
-
-            currentUser = { role: 'student', studentId: studId, data: studentExists };
+            activeStudentId = found.id;
             document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('app-container').style.display = 'flex';
-            setupStudentNavigation();
-            switchTab('student-portal');
+            document.getElementById('appContainer').style.display = 'flex';
+            document.getElementById('portal-title-header').innerText = 'Student Portal';
+            document.getElementById('user-badge').innerText = found.name;
+
+            document.getElementById('sidebar-nav-links').innerHTML = `
+                <li class="active"><a href="#" onclick="switchStudentTab()"><i class="fa-solid fa-user-check"></i> My Attendance</a></li>
+            `;
+            document.getElementById('studentPortalName').innerText = found.name;
+            document.getElementById('studentPortalId').innerText = found.id;
+            renderStudentHistory();
         }
 
         function logout() {
-            currentUser = null;
-            document.getElementById('app-container').style.display = 'none';
+            document.getElementById('appContainer').style.display = 'none';
             document.getElementById('login-screen').style.display = 'flex';
-            document.getElementById('teacherPassword').value = '';
-            document.getElementById('studentLoginId').value = '';
+            activeStudentId = null;
         }
 
-        function setupTeacherNavigation() {
-            document.getElementById('sidebar-nav-links').innerHTML = `
-                <li class="active"><a href="#" onclick="switchTab('dashboard')"><i class="fa-solid fa-chart-pie"></i> Dashboard</a></li>
-                <li><a href="#" onclick="switchTab('students')"><i class="fa-solid fa-users"></i> Manage Students</a></li>
-                <li><a href="#" onclick="switchTab('attendance')"><i class="fa-solid fa-map-location-dot"></i> GPS Check-In</a></li>
-                <li><a href="#" onclick="switchTab('reports')"><i class="fa-solid fa-file-lines"></i> Reports & Logs</a></li>
-            `;
-            document.getElementById('user-role-title').innerText = 'System Admin';
-            document.getElementById('user-role-subtitle').innerText = 'Faculty Portal';
-            document.getElementById('user-avatar').src = 'https://api.dicebear.com/7.x/avataaars/svg?seed=AdminUser';
-        }
-
-        function setupStudentNavigation() {
-            document.getElementById('sidebar-nav-links').innerHTML = `
-                <li class="active"><a href="#" onclick="switchTab('student-portal')"><i class="fa-solid fa-user"></i> My Attendance</a></li>
-            `;
-            document.getElementById('user-role-title').innerText = currentUser.data.name;
-            document.getElementById('user-role-subtitle').innerText = 'ID: ' + currentUser.studentId;
-            document.getElementById('user-avatar').src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.studentId}`;
-        }
-
-        function switchTab(tabId) {
+        function switchTeacherTab(tabId, el) {
             document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
             document.querySelectorAll('.nav-links li').forEach(li => li.classList.remove('active'));
-            
             document.getElementById(tabId).classList.add('active');
-            event && event.currentTarget && event.currentTarget.parentElement.classList.add('active');
-            
-            const titles = {
-                'dashboard': 'Dashboard Overview',
-                'students': 'Student Directory Management',
-                'attendance': 'GPS Geofenced Attendance Portal',
-                'reports': 'Attendance Logs & Analytics',
-                'student-portal': 'My Personal Attendance Record'
-            };
-            document.getElementById('page-title').innerText = titles[tabId];
+            el.classList.add('active');
 
-            if (currentUser.role === 'teacher') {
-                if (tabId === 'dashboard') updateDashboard();
-                if (tabId === 'students') renderStudentsTable();
-                if (tabId === 'attendance') {
-                    document.getElementById('attendanceDate').valueAsDate = new Date();
-                    renderAttendanceSheet();
+            if (tabId === 'teacher-dashboard') updateTeacherDashboard();
+            if (tabId === 'teacher-students') renderStudentsTable();
+            if (tabId === 'teacher-reports') renderReportsTable();
+        }
+
+        function switchStudentTab() {
+            document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
+            document.getElementById('student-portal').classList.add('active');
+            renderStudentHistory();
+        }
+
+        function broadcastTeacherLocation() {
+            if (!navigator.geolocation) { alert('Geolocation not supported'); return; }
+            navigator.geolocation.getCurrentPosition(pos => {
+                teacherBeacon = { lat: pos.coords.latitude, lng: pos.coords.longitude, time: new Date().toLocaleTimeString() };
+                localStorage.setItem('teacher_beacon', JSON.stringify(teacherBeacon));
+                document.getElementById('beaconStatus').innerText = `Active (Set at ${teacherBeacon.time})`;
+                document.getElementById('beaconStatus').style.color = 'var(--success)';
+                alert('Teacher classroom location beacon successfully broadcasted!');
+            }, err => alert('GPS Error: ' + err.message), { enableHighAccuracy: true });
+        }
+
+        function studentProximityCheckIn() {
+            if (!teacherBeacon) {
+                alert('Teacher has not started the classroom location beacon yet!');
+                return;
+            }
+            if (!navigator.geolocation) { alert('Geolocation not supported'); return; }
+
+            navigator.geolocation.getCurrentPosition(pos => {
+                const dist = calculateDistance(pos.coords.latitude, pos.coords.longitude, teacherBeacon.lat, teacherBeacon.lng);
+                const allowedRadius = 50; // 50 meters proximity limit
+
+                if (dist <= allowedRadius) {
+                    const today = new Date().toISOString().split('T')[0];
+                    if (!attendanceRecords[today]) attendanceRecords[today] = {};
+                    attendanceRecords[today][activeStudentId] = 'Present';
+                    localStorage.setItem('attend_records', JSON.stringify(attendanceRecords));
+                    alert(`Proximity Verified! You are ${Math.round(dist)}m away from teacher. Attendance marked Present!`);
+                    renderStudentHistory();
+                } else {
+                    alert(`Check-in Failed! You are ${Math.round(dist)}m away. You must be within ${allowedRadius}m of the teacher.`);
                 }
-                if (tabId === 'reports') renderReportsTable();
-            } else if (currentUser.role === 'student' && tabId === 'student-portal') {
-                renderStudentPortal();
-            }
-        }
-
-        function persistData() {
-            localStorage.setItem('attend_students', JSON.stringify(students));
-            localStorage.setItem('attend_records', JSON.stringify(attendanceRecords));
-            localStorage.setItem('campus_coords', JSON.stringify(campusLocation));
-        }
-
-        function updateCampusCoords() {
-            const lat = prompt("Enter Campus Latitude:", campusLocation.lat);
-            const lng = prompt("Enter Campus Longitude:", campusLocation.lng);
-            const radius = prompt("Enter Allowed Radius in meters:", campusLocation.radiusMeters);
-            if (lat && lng && radius) {
-                campusLocation.lat = parseFloat(lat);
-                campusLocation.lng = parseFloat(lng);
-                campusLocation.radiusMeters = parseFloat(radius);
-                persistData();
-                alert('Campus coordinates updated successfully!');
-            }
+            }, err => alert('GPS Error: ' + err.message), { enableHighAccuracy: true });
         }
 
         function calculateDistance(lat1, lon1, lat2, lon2) {
             const R = 6371e3;
-            const φ1 = lat1 * Math.PI/180, φ2 = lat2 * Math.PI/180;
-            const Δφ = (lat2-lat1) * Math.PI/180, Δλ = (lon2-lon1) * Math.PI/180;
-            const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2) * Math.sin(Δλ/2);
+            const dLat = (lat2-lat1) * Math.PI/180;
+            const dLon = (lon2-lon1) * Math.PI/180;
+            const a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
             return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
         }
 
@@ -721,234 +353,63 @@
             const id = document.getElementById('studentId').value.trim();
             const name = document.getElementById('studentName').value.trim();
             const cls = document.getElementById('studentClass').value.trim();
-
-            if (students.some(s => s.id === id)) {
-                alert('A student with this ID already exists!');
-                return;
-            }
+            if (students.some(s => s.id === id)) { alert('Student ID already exists!'); return; }
             students.push({ id, name, class: cls });
-            persistData();
+            localStorage.setItem('attend_students', JSON.stringify(students));
             document.getElementById('studentForm').reset();
             renderStudentsTable();
-            alert('Student added successfully!');
-        }
-
-        function deleteStudent(id) {
-            if (confirm('Are you sure you want to delete this student?')) {
-                students = students.filter(s => s.id !== id);
-                persistData();
-                renderStudentsTable();
-            }
+            alert('Student added!');
         }
 
         function renderStudentsTable() {
             const tbody = document.getElementById('studentsTableBody');
+            tbody.innerHTML = students.map(s => `<tr><td><strong>${s.id}</strong></td><td>${s.name}</td><td>${s.class}</td><td><button class="btn btn-secondary" onclick="deleteStudent('${s.id}')">Delete</button></td></tr>`).join('');
+        }
+
+        function deleteStudent(id) {
+            students = students.filter(s => s.id !== id);
+            localStorage.setItem('attend_students', JSON.stringify(students));
+            renderStudentsTable();
+        }
+
+        function renderStudentHistory() {
+            const tbody = document.getElementById('studentHistoryBody');
             tbody.innerHTML = '';
-            if (students.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">No students registered yet.</td></tr>`;
-                return;
+            const dates = Object.keys(attendanceRecords);
+            if (dates.length === 0) { tbody.innerHTML = `<tr><td colspan="2" style="text-align:center;">No records found.</td></tr>`; return; }
+            dates.forEach(date => {
+                const status = attendanceRecords[date][activeStudentId] || 'Absent';
+                tbody.innerHTML += `<tr><td>${date}</td><td><span class="badge ${status.toLowerCase()}">${status}</span></td></tr>`;
+            });
+        }
+
+        function updateTeacherDashboard() {
+            document.getElementById('stat-total-students').innerText = students.length;
+            if (teacherBeacon) {
+                document.getElementById('beaconStatus').innerText = `Active (Set at ${teacherBeacon.time})`;
+                document.getElementById('beaconStatus').style.color = 'var(--success)';
             }
-            students.forEach(s => {
-                tbody.innerHTML += `
-                    <tr>
-                        <td><strong>${s.id}</strong></td>
-                        <td>${s.name}</td>
-                        <td>${s.class}</td>
-                        <td><button class="btn-icon delete" onclick="deleteStudent('${s.id}')"><i class="fa-solid fa-trash"></i></button></td>
-                    </tr>
-                `;
-            });
-        }
-
-        function renderAttendanceSheet() {
-            const dateStr = document.getElementById('attendanceDate').value;
-            const tbody = document.getElementById('attendanceSheetBody');
-            tbody.innerHTML = '';
-            if (students.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">Please add students first.</td></tr>`;
-                return;
-            }
-            const dayRecord = attendanceRecords[dateStr] || {};
-            students.forEach(s => {
-                const currentStatus = dayRecord[s.id] || 'Present';
-                tbody.innerHTML += `
-                    <tr>
-                        <td><strong>${s.id}</strong></td>
-                        <td>${s.name}</td>
-                        <td>${s.class}</td>
-                        <td>
-                            <select class="form-control status-select" data-id="${s.id}" style="width: 150px;">
-                                <option value="Present" ${currentStatus === 'Present' ? 'selected' : ''}>Present</option>
-                                <option value="Absent" ${currentStatus === 'Absent' ? 'selected' : ''}>Absent</option>
-                                <option value="Late" ${currentStatus === 'Late' ? 'selected' : ''}>Late</option>
-                            </select>
-                        </td>
-                    </tr>
-                `;
-            });
-        }
-
-        function verifyAndSaveAttendance() {
-            const dateStr = document.getElementById('attendanceDate').value;
-            const statusMsg = document.getElementById('gpsStatusText');
-
-            if (!dateStr) { alert('Please pick a valid date.'); return; }
-            if (!navigator.geolocation) { alert('Geolocation not supported.'); return; }
-
-            statusMsg.innerHTML = `<i class="fa-solid fa-spinner fa-spin" style="color:var(--primary);"></i> Acquiring GPS coordinates...`;
-
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const distance = calculateDistance(position.coords.latitude, position.coords.longitude, campusLocation.lat, campusLocation.lng);
-                    if (distance <= campusLocation.radiusMeters) {
-                        statusMsg.innerHTML = `<i class="fa-solid fa-circle-check" style="color:var(--success);"></i> GPS Verified! (${Math.round(distance)}m away).`;
-                        const selects = document.querySelectorAll('.status-select');
-                        if (!attendanceRecords[dateStr]) attendanceRecords[dateStr] = {};
-                        selects.forEach(sel => { attendanceRecords[dateStr][sel.getAttribute('data-id')] = sel.value; });
-                        persistData();
-                        alert('Attendance successfully recorded with geofencing validation!');
-                    } else {
-                        statusMsg.innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="color:var(--danger);"></i> Out of bounds! (${Math.round(distance)}m away).`;
-                        alert(`Access Denied: You are outside campus bounds (${Math.round(distance)}m away).`);
-                    }
-                },
-                (error) => {
-                    statusMsg.innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="color:var(--danger);"></i> GPS Location error.`;
-                    alert('Error retrieving location: ' + error.message);
-                },
-                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-            );
-        }
-
-        function renderStudentPortal() {
-            const studId = currentUser.studentId;
-            const sessionDates = Object.keys(attendanceRecords);
-            let p = 0, a = 0, l = 0, total = 0;
-            const tbody = document.getElementById('studentHistoryTableBody');
-            tbody.innerHTML = '';
-
-            document.getElementById('student-welcome-title').innerText = `Attendance History for ${currentUser.data.name} (${studId})`;
-
-            sessionDates.forEach(date => {
-                const status = attendanceRecords[date][studId];
-                if (status) {
-                    total++;
-                    if (status === 'Present') p++;
-                    if (status === 'Absent') a++;
-                    if (status === 'Late') l++;
-
-                    let badgeClass = status === 'Present' ? 'present' : (status === 'Absent' ? 'absent' : 'late');
-                    tbody.innerHTML += `
-                        <tr>
-                            <td>${date}</td>
-                            <td><span class="badge ${badgeClass}">${status}</span></td>
-                        </tr>
-                    `;
-                }
-            });
-
-            if (total === 0) {
-                tbody.innerHTML = `<tr><td colspan="2" style="text-align:center; color:var(--text-muted);">No attendance records logged for your ID yet.</td></tr>`;
-            }
-
-            const pct = total > 0 ? Math.round(((p + l) / total) * 100) : 100;
-            document.getElementById('stud-stat-pct').innerText = pct + '%';
-            document.getElementById('stud-stat-present').innerText = p + l;
-            document.getElementById('stud-stat-absent').innerText = a;
-        }
-
-        function calculateStats() {
-            let totalPresent = 0, totalAbsent = 0, totalLate = 0, totalMarks = 0;
-            const sessionDates = Object.keys(attendanceRecords);
-            sessionDates.forEach(date => {
-                Object.values(attendanceRecords[date]).forEach(status => {
-                    totalMarks++;
-                    if (status === 'Present') totalPresent++;
-                    if (status === 'Absent') totalAbsent++;
-                    if (status === 'Late') totalLate++;
-                });
-            });
-
-            let atRiskCount = 0;
-            students.forEach(s => {
-                let p = 0, t = 0;
-                sessionDates.forEach(date => {
-                    const st = attendanceRecords[date][s.id];
-                    if (st) { t++; if (st === 'Present' || st === 'Late') p++; }
-                });
-                if (t > 0 && (p / t) * 100 < 75) atRiskCount++;
-            });
-
-            return {
-                totalStudents: students.length,
-                avgPercentage: totalMarks > 0 ? Math.round((totalPresent / totalMarks) * 100) : 0,
-                sessionsCount: sessionDates.length,
-                atRiskCount, totalPresent, totalAbsent, totalLate
-            };
         }
 
         function renderReportsTable() {
             const tbody = document.getElementById('reportsTableBody');
-            tbody.innerHTML = '';
-            const sessionDates = Object.keys(attendanceRecords);
-
-            students.forEach(s => {
-                let p = 0, a = 0, l = 0, total = 0;
-                sessionDates.forEach(date => {
-                    const status = attendanceRecords[date][s.id];
-                    if (status) { total++; if (status === 'Present') p++; if (status === 'Absent') a++; if (status === 'Late') l++; }
+            tbody.innerHTML = students.map(s => {
+                let p = 0, t = 0;
+                Object.keys(attendanceRecords).forEach(d => {
+                    const st = attendanceRecords[d][s.id];
+                    if (st) { t++; if (st === 'Present') p++; }
                 });
-                const pct = total > 0 ? ((p + l) / total * 100).toFixed(1) : '0.0';
-                tbody.innerHTML += `
-                    <tr>
-                        <td><strong>${s.id}</strong></td><td>${s.name}</td><td>${s.class}</td>
-                        <td><span class="badge present">${p}</span></td>
-                        <td><span class="badge absent">${a}</span></td>
-                        <td><span class="badge late">${l}</span></td>
-                        <td>${total}</td><td><strong>${pct}%</strong></td>
-                    </tr>
-                `;
-            });
+                const pct = t > 0 ? ((p/t)*100).toFixed(1) : '0.0';
+                return `<tr><td>${s.id}</td><td>${s.name}</td><td>${p}</td><td>${t-p}</td><td><strong>${pct}%</strong></td></tr>`;
+            }).join('');
         }
 
-        function updateDashboard() {
-            const stats = calculateStats();
-            document.getElementById('stat-total-students').innerText = stats.totalStudents;
-            document.getElementById('stat-overall-present').innerText = stats.avgPercentage + '%';
-            document.getElementById('stat-classes-recorded').innerText = stats.sessionsCount;
-            document.getElementById('stat-low-attendance').innerText = stats.atRiskCount;
-
-            const ctx = document.getElementById('overviewChart').getContext('2d');
-            if (overviewChartInstance) overviewChartInstance.destroy();
-
-            overviewChartInstance = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Present', 'Absent', 'Late'],
-                    datasets: [{ data: [stats.totalPresent, stats.totalAbsent, stats.totalLate], backgroundColor: ['#10b981', '#ef4444', '#f59e0b'], borderWidth: 0 }]
-                },
-                options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
-            });
-        }
-
-        function exportCSVReport() {
-            let csvContent = "data:text/csv;charset=utf-8,Student ID,Name,Class,Total Present,Total Absent,Total Late,Percentage\n";
-            const sessionDates = Object.keys(attendanceRecords);
-            students.forEach(s => {
-                let p = 0, a = 0, l = 0, total = 0;
-                sessionDates.forEach(date => {
-                    const status = attendanceRecords[date][s.id];
-                    if (status) { total++; if (status === 'Present') p++; if (status === 'Absent') a++; if (status === 'Late') l++; }
-                });
-                const pct = total > 0 ? ((p + l) / total * 100).toFixed(1) : '0.0';
-                csvContent += `"${s.id}","${s.name}","${s.class}",${p},${a},${l},${pct}%\n`;
-            });
+        function exportCSV() {
+            let csv = "ID,Name,Class\n" + students.map(s => `"${s.id}","${s.name}","${s.class}"`).join("\n");
             const link = document.createElement("a");
-            link.setAttribute("href", encodeURI(csvContent));
-            link.setAttribute("download", "attendance_report.csv");
-            document.body.appendChild(link);
+            link.href = encodeURI("data:text/csv;charset=utf-8," + csv);
+            link.download = "students_report.csv";
             link.click();
-            document.body.removeChild(link);
         }
     </script>
 </body>
