@@ -1,4 +1,4 @@
-\<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -148,6 +148,10 @@
                             <div class="stat-icon blue"><i class="fa-solid fa-user-graduate"></i></div>
                             <div class="stat-info"><h3 id="stat-total-students">0</h3><p>Total Students</p></div>
                         </div>
+                        <div class="stat-card">
+                            <div class="stat-icon green"><i class="fa-solid fa-user-check"></i></div>
+                            <div class="stat-info"><h3 id="stat-today-present">0</h3><p>Present Today</p></div>
+                        </div>
                     </div>
                     <div class="card">
                         <div class="card-header"><h3>Live Classroom GPS Beacon Control</h3></div>
@@ -186,7 +190,7 @@
                     <div class="card">
                         <div class="card-header"><h3>Master Attendance Logs</h3><button class="btn btn-secondary" onclick="exportCSV()"><i class="fa-solid fa-download"></i> Export CSV</button></div>
                         <table>
-                            <thead><tr><th>ID</th><th>Name</th><th>Present</th><th>Absent</th><th>Percentage</th></tr></thead>
+                            <thead><tr><th>ID</th><th>Name</th><th>Present Days</th><th>Absent Days</th><th>Percentage</th></tr></thead>
                             <tbody id="reportsTableBody"></tbody>
                         </table>
                     </div>
@@ -214,12 +218,29 @@
         let currentRole = 'teacher';
         let activeStudentId = null;
 
-        let students = JSON.parse(localStorage.getItem('attend_students')) || [
+        // Load data helpers with real-time sync listeners
+        function getData(key, defaultVal) {
+            const val = localStorage.getItem(key);
+            return val ? JSON.parse(val) : defaultVal;
+        }
+
+        let students = getData('attend_students', [
             { id: 'CS101', name: 'Alice Smith', class: 'B.Tech CSE' },
             { id: 'CS102', name: 'Bob Jones', class: 'B.Tech CSE' }
-        ];
-        let attendanceRecords = JSON.parse(localStorage.getItem('attend_records')) || {};
-        let teacherBeacon = JSON.parse(localStorage.getItem('teacher_beacon')) || null;
+        ]);
+        let attendanceRecords = getData('attend_records', {});
+        let teacherBeacon = getData('teacher_beacon', null);
+
+        // Listen for storage changes across tabs/devices if simulated locally
+        window.addEventListener('storage', () => {
+            students = getData('attend_students', students);
+            attendanceRecords = getData('attend_records', {});
+            teacherBeacon = getData('teacher_beacon', null);
+            if (currentRole === 'teacher') {
+                updateTeacherDashboard();
+                renderReportsTable();
+            }
+        });
 
         function setRole(role) {
             currentRole = role;
@@ -249,6 +270,7 @@
         }
 
         function loginAsStudent() {
+            students = getData('attend_students', students);
             const idInput = document.getElementById('loginStudentId').value.trim();
             const found = students.find(s => s.id === idInput);
             if (!found) {
@@ -281,6 +303,11 @@
             document.getElementById(tabId).classList.add('active');
             el.classList.add('active');
 
+            // Refresh data on tab switch
+            students = getData('attend_students', students);
+            attendanceRecords = getData('attend_records', {});
+            teacherBeacon = getData('teacher_beacon', null);
+
             if (tabId === 'teacher-dashboard') updateTeacherDashboard();
             if (tabId === 'teacher-students') renderStudentsTable();
             if (tabId === 'teacher-reports') renderReportsTable();
@@ -304,6 +331,7 @@
         }
 
         function studentProximityCheckIn() {
+            teacherBeacon = getData('teacher_beacon', null);
             if (!teacherBeacon) {
                 alert('Teacher has not started the classroom location beacon yet!');
                 return;
@@ -316,9 +344,11 @@
 
                 if (dist <= allowedRadius) {
                     const today = new Date().toISOString().split('T')[0];
+                    attendanceRecords = getData('attend_records', {});
                     if (!attendanceRecords[today]) attendanceRecords[today] = {};
                     attendanceRecords[today][activeStudentId] = 'Present';
                     localStorage.setItem('attend_records', JSON.stringify(attendanceRecords));
+                    
                     alert(`Proximity Verified! You are ${Math.round(dist)}m away from teacher. Attendance marked Present!`);
                     renderStudentHistory();
                 } else {
@@ -340,6 +370,7 @@
             const id = document.getElementById('studentId').value.trim();
             const name = document.getElementById('studentName').value.trim();
             const cls = document.getElementById('studentClass').value.trim();
+            students = getData('attend_students', students);
             if (students.some(s => s.id === id)) { alert('Student ID already exists!'); return; }
             students.push({ id, name, class: cls });
             localStorage.setItem('attend_students', JSON.stringify(students));
@@ -349,17 +380,19 @@
         }
 
         function renderStudentsTable() {
+            students = getData('attend_students', students);
             const tbody = document.getElementById('studentsTableBody');
             tbody.innerHTML = students.map(s => `<tr><td><strong>${s.id}</strong></td><td>${s.name}</td><td>${s.class}</td><td><button class="btn btn-secondary" onclick="deleteStudent('${s.id}')">Delete</button></td></tr>`).join('');
         }
 
         function deleteStudent(id) {
-            students = students.filter(s => s.id !== id);
+            students = getData('attend_students', students).filter(s => s.id !== id);
             localStorage.setItem('attend_students', JSON.stringify(students));
             renderStudentsTable();
         }
 
         function renderStudentHistory() {
+            attendanceRecords = getData('attend_records', {});
             const tbody = document.getElementById('studentHistoryBody');
             tbody.innerHTML = '';
             const dates = Object.keys(attendanceRecords);
@@ -371,7 +404,19 @@
         }
 
         function updateTeacherDashboard() {
+            students = getData('attend_students', students);
+            attendanceRecords = getData('attend_records', {});
             document.getElementById('stat-total-students').innerText = students.length;
+            
+            const today = new Date().toISOString().split('T')[0];
+            let presentCount = 0;
+            if (attendanceRecords[today]) {
+                students.forEach(s => {
+                    if (attendanceRecords[today][s.id] === 'Present') presentCount++;
+                });
+            }
+            document.getElementById('stat-today-present').innerText = presentCount;
+
             if (teacherBeacon) {
                 document.getElementById('beaconStatus').innerText = `Active (Set at ${teacherBeacon.time})`;
                 document.getElementById('beaconStatus').style.color = 'var(--success)';
@@ -379,6 +424,8 @@
         }
 
         function renderReportsTable() {
+            students = getData('attend_students', students);
+            attendanceRecords = getData('attend_records', {});
             const tbody = document.getElementById('reportsTableBody');
             tbody.innerHTML = students.map(s => {
                 let p = 0, t = 0;
@@ -392,6 +439,7 @@
         }
 
         function exportCSV() {
+            students = getData('attend_students', students);
             let csv = "ID,Name,Class\n" + students.map(s => `"${s.id}","${s.name}","${s.class}"`).join("\n");
             const link = document.createElement("a");
             link.href = encodeURI("data:text/csv;charset=utf-8," + csv);
