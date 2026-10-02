@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+\<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -155,7 +155,7 @@
                             <div><i class="fa-solid fa-broadcast-tower"></i> Teacher Live Location Broadcast: <span id="beaconStatus" style="font-weight: 700; color: var(--danger);">Not Broadcasting</span></div>
                             <button class="btn btn-gps" onclick="broadcastTeacherLocation()"><i class="fa-solid fa-location-crosshairs"></i> Start Broadcasting Location</button>
                         </div>
-                        <p style="font-size: 0.85rem; color: var(--text-muted);">When active, student mobile check-ins will validate against your live GPS coordinates within a 50m radius.</p>
+                        <p style="font-size: 0.85rem; color: var(--text-muted);">When active, student mobile check-ins will validate against your live GPS coordinates within a 120m radius.</p>
                     </div>
                 </section>
 
@@ -312,7 +312,7 @@
 
             navigator.geolocation.getCurrentPosition(pos => {
                 const dist = calculateDistance(pos.coords.latitude, pos.coords.longitude, teacherBeacon.lat, teacherBeacon.lng);
-                const allowedRadius = 50; // 50 meters proximity limit
+                const allowedRadius = 120; // 120 meters proximity limit
 
                 if (dist <= allowedRadius) {
                     const today = new Date().toISOString().split('T')[0];
