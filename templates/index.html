@@ -66,7 +66,6 @@
         .stat-icon { width: 60px; height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; }
         .stat-icon.blue { background: rgba(79, 70, 229, 0.1); color: var(--primary); }
         .stat-icon.green { background: rgba(16, 185, 129, 0.1); color: var(--success); }
-        .stat-icon.red { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
         
         .card { background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border); padding: 24px; margin-bottom: 24px; }
         .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
@@ -122,43 +121,32 @@
 
     <!-- MAIN APP CONTAINER -->
     <div class="app-container" id="appContainer">
-        <!-- Sidebar Navigation -->
         <aside>
             <div>
                 <div class="logo-area">
                     <i class="fa-solid fa-graduation-cap"></i>
                     <h2 id="portal-title-header">Teacher Portal</h2>
                 </div>
-                <ul class="nav-links" id="sidebar-nav-links">
-                    <!-- Dynamic links injected based on role -->
-                </ul>
+                <ul class="nav-links" id="sidebar-nav-links"></ul>
             </div>
             <div>
                 <button class="btn btn-secondary" style="width: 100%; justify-content: center;" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
             </div>
         </aside>
 
-        <!-- Main Content Area -->
         <main>
             <header>
                 <h1 id="page-title">Dashboard</h1>
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <span id="user-badge" class="badge present">Teacher Mode</span>
-                </div>
+                <span id="user-badge" class="badge present">Teacher Mode</span>
             </header>
 
             <div class="content-body">
-
-                <!-- 1. TEACHER DASHBOARD -->
+                <!-- TEACHER DASHBOARD -->
                 <section id="teacher-dashboard" class="view-section">
                     <div class="stats-grid">
                         <div class="stat-card">
                             <div class="stat-icon blue"><i class="fa-solid fa-user-graduate"></i></div>
                             <div class="stat-info"><h3 id="stat-total-students">0</h3><p>Total Students</p></div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-icon green"><i class="fa-solid fa-user-check"></i></div>
-                            <div class="stat-info"><h3 id="stat-overall-present">0%</h3><p>Average Attendance</p></div>
                         </div>
                     </div>
                     <div class="card">
@@ -171,7 +159,7 @@
                     </div>
                 </section>
 
-                <!-- 2. TEACHER MANAGE STUDENTS -->
+                <!-- TEACHER MANAGE STUDENTS -->
                 <section id="teacher-students" class="view-section">
                     <div class="card">
                         <div class="card-header"><h3>Add New Student</h3></div>
@@ -193,7 +181,7 @@
                     </div>
                 </section>
 
-                <!-- 3. TEACHER REPORTS -->
+                <!-- TEACHER REPORTS -->
                 <section id="teacher-reports" class="view-section">
                     <div class="card">
                         <div class="card-header"><h3>Master Attendance Logs</h3><button class="btn btn-secondary" onclick="exportCSV()"><i class="fa-solid fa-download"></i> Export CSV</button></div>
@@ -204,7 +192,7 @@
                     </div>
                 </section>
 
-                <!-- 4. STUDENT INDIVIDUAL PORTAL -->
+                <!-- STUDENT INDIVIDUAL PORTAL -->
                 <section id="student-portal" class="view-section">
                     <div class="banner">
                         <div><i class="fa-solid fa-id-badge"></i> Welcome, <span id="studentPortalName" style="font-weight: 700;"></span> (<span id="studentPortalId"></span>)</div>
@@ -218,7 +206,6 @@
                         </table>
                     </div>
                 </section>
-
             </div>
         </main>
     </div>
@@ -232,7 +219,7 @@
             { id: 'CS102', name: 'Bob Jones', class: 'B.Tech CSE' }
         ];
         let attendanceRecords = JSON.parse(localStorage.getItem('attend_records')) || {};
-        let teacherBeacon = JSON.parse(localStorage.getItem('teacher_beacon')) || null; // {lat, lng, activeTime}
+        let teacherBeacon = JSON.parse(localStorage.getItem('teacher_beacon')) || null;
 
         function setRole(role) {
             currentRole = role;
